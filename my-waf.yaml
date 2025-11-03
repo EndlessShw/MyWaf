@@ -1,0 +1,56 @@
+- name: Log4j Attack
+  condition: or
+  details:
+    - method: GET
+      element: Any
+      regPattern: \$\{.*:\/\/.*\/?\w+?\}
+      dsl: ""
+- name: Body Contains "foo" String
+  condition: or
+  details:
+    - method: ""
+      element: Any
+      regPattern: ""
+      dsl: request.Body contains "foo"
+- name: Headers Contains "curl" String
+  condition: or
+  details:
+    - method: ""
+      element: Any
+      regPattern: ""
+      dsl: request.Headers contains "curl"
+- name: Request IP Address is Localhost
+  condition: or
+  details:
+    - method: ""
+      element: Any
+      regPattern: ""
+      dsl: request.IP in ["127.0.0.1", "::1", "0.0.0.0"]
+- name: LDAP Injection
+  condition: or
+  details:
+    - method: ALL
+      element: Any
+      regPattern: (and|or|not|&&|\|\|)
+      dsl: ""
+- name: Method is GET
+  condition: or
+  details:
+    - method: ""
+      element: Any
+      regPattern: ""
+      dsl: request.Method == "GET"
+- name: Request Contains "foo" String
+  condition: or
+  details:
+    - method: ""
+      element: Any
+      regPattern: ""
+      dsl: 'one(request.ALL, # contains "foo")'
+- name: SQL Injection
+  condition: or
+  details:
+    - method: ALL
+      element: Any
+      regPattern: (union|select|insert|update|delete|drop|alter)
+      dsl: ""

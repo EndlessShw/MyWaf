@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteTargetsManager">
+    <option name="projectDefaultTargetUuid" value="af1ca8fd-2c44-4186-a4bd-8033b6591465" />
+    <targets>
+      <target name="endlessshw@10.21.253.66:22" type="ssh/sftp" uuid="af1ca8fd-2c44-4186-a4bd-8033b6591465">
+        <config>
+          <option name="projectRootOnTarget" value="/home/endlessshw/MyWaf" />
+          <option name="serverName" value="endlessshw@10.21.253.66:22 password" />
+        </config>
+        <ContributedStateBase type="GoLanguageRuntime">
+          <config>
+            <option name="compiledExecutablesVolume">
+              <VolumeState>
+                <option name="remotePath" value="/home/endlessshw/GoProjects/MyWaf/out" />
+              </VolumeState>
+            </option>
+            <option name="goPath" value="/usr/local/go/goPath" />
+            <option name="goRoot" value="/usr/local/go/bin/go" />
+            <option name="projectSourcesVolume">
+              <VolumeState>
+                <option name="remotePath" value="/home/endlessshw/GoProjects/MyWaf" />
+              </VolumeState>
+            </option>
+          </config>
+        </ContributedStateBase>
+      </target>
+    </targets>
+  </component>
+</project>
