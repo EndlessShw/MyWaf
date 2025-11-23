@@ -3,7 +3,7 @@
 // @time           : 2025/9/14 14:43
 // @Description    : todo
 // -------------------------------------------
-package main
+package example
 
 import (
 	"MyWaf"

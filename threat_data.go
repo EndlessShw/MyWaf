@@ -6,7 +6,7 @@
 package MyWaf
 
 import (
-	"MyWaf/entity"
+	"MyWaf/model"
 	"MyWaf/threat"
 	"github.com/dwisiswant0/pcregexp/pkg/regexp"
 )
@@ -19,10 +19,10 @@ type ThreatData struct {
 	// 根据不同攻击类型，规则解析的方式也有所不同，提前存储这些规则的解析形式
 
 	// cwa 为 CommonWebAttack 所需要的结构体，其中的 Filters Struct Slice 存放所有的规则
-	cwa *entity.CWA
+	cwa *model.CWA
 
 	// cve 为 CVE 所需要的结构体，其中的 Templates Struct Slice 存放所有的规则
-	cve *entity.CVE
+	cve *model.CVE
 
 	// threat.BadIPAddress 每一行就是一个 IP，不需要额外的种类来装饰，BadReferrer、DirectoryBruteforce 也是。
 

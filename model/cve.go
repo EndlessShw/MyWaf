@@ -1,9 +1,9 @@
-// Package entity -----------------------------
+// Package model -----------------------------
 // @author         : EndlessShw
 // @time           : 2025/10/5 13:51
 // @Description    : CVE 的对应实体类
 // -------------------------------------------
-package entity
+package model
 
 import (
 	"fmt"

@@ -24,9 +24,9 @@ import (
 func (mywaf *MyWaf) Analyze(rw http.ResponseWriter, req *http.Request) error {
 	// note 暂时不知道返回的威胁类型有什么用
 	_, err := mywaf.analyzeRequest(rw, req)
-	if err != nil {
-		setCustomHeader(rw, xMyWafReqId, getUID())
-	}
+	//if err != nil {
+	//	setCustomHeader(rw, xMyWafReqId, getUID())
+	//}
 	return err
 }
 

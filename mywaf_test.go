@@ -6,9 +6,10 @@
 package MyWaf
 
 import (
-	"MyWaf/entity"
+	"MyWaf/model"
 	"github.com/bytedance/sonic"
 	"log"
+	"net/http"
 	"os"
 	"testing"
 )
@@ -36,7 +37,7 @@ func Test_yamlToRule(t *testing.T) {
 
 // Test_unmarshalCVE 测试 CVE.json 反序列化是否有问题
 func Test_unmarshalCVE(t *testing.T) {
-	cve := &entity.CVE{}
+	cve := &model.CVE{}
 	cveFile, err := os.ReadFile("cve.json")
 	if err != nil {
 		log.Fatalf("fail to open cve.json, err is %v", err)
@@ -51,4 +52,18 @@ func Test_unmarshalCVE(t *testing.T) {
 func TestNew(t *testing.T) {
 	myWaf := New()
 	println(myWaf)
+}
+
+// Test_Analyze 测试 MyWaf 是否可以模块化
+// 结果是可以模块化
+func Test_Analyze(t *testing.T) {
+	request, err := http.NewRequest("GET", "http://localhost:8080/analyze?param1=value1&param2=cat%20/etc/passwd", nil)
+	if err != nil {
+		log.Fatalf("fail to create request, err is %v", err)
+	}
+	myWaf := New()
+	err = myWaf.Analyze(nil, request)
+	if err != nil {
+		log.Printf("detect threat! err is %v", err)
+	}
 }

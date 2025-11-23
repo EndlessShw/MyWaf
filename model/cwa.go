@@ -1,9 +1,9 @@
-// Package entity -----------------------------
+// Package model -----------------------------
 // @author         : EndlessShw
 // @time           : 2025/9/17 23:57
 // @Description    : 一条 CommonWebAttack 结构体
 // -------------------------------------------
-package entity
+package model
 
 // point Teler 原作者写了一个正则的库
 import "github.com/dwisiswant0/pcregexp/pkg/regexp"

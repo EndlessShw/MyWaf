@@ -7,7 +7,7 @@ package MyWaf
 
 import (
 	"MyWaf/dsl"
-	"MyWaf/entity"
+	"MyWaf/model"
 	"MyWaf/option"
 	"MyWaf/request"
 	"MyWaf/threat"
@@ -392,7 +392,7 @@ func (mywaf *MyWaf) processResource(threatType threat.Threat) error {
 	// note 针对不同的攻击类型进行处理
 	switch threatType {
 	case threat.CommonWebAttack:
-		mywaf.threatData.cwa = &entity.CWA{}
+		mywaf.threatData.cwa = &model.CWA{}
 		// 反序列化
 		err = sonic.Unmarshal([]byte(mywaf.threatData.data[threatType]), &mywaf.threatData.cwa)
 		if err != nil {
@@ -407,7 +407,7 @@ func (mywaf *MyWaf) processResource(threatType threat.Threat) error {
 			}
 		}
 	case threat.CVE:
-		mywaf.threatData.cve = &entity.CVE{}
+		mywaf.threatData.cve = &model.CVE{}
 		// 先通过调用函数解析
 		err = sonic.Unmarshal([]byte(mywaf.threatData.data[threatType]), &mywaf.threatData.cve)
 		if err != nil {
