@@ -6,8 +6,8 @@
 package MyWaf
 
 import (
-	"MyWaf/dsl"
-	"MyWaf/model"
+	"MyWaf/internal/dsl"
+	"MyWaf/internal/model"
 	"MyWaf/option"
 	"MyWaf/request"
 	"MyWaf/threat"
@@ -43,7 +43,7 @@ type MyWaf struct {
 	logger *zap.Logger
 
 	// threatData 为威胁数据库的包装类
-	threatData *ThreatData
+	threatData *model.ThreatData
 
 	// rejectHandler 为拒绝或阻断的 Handler
 	rejectHandler http.Handler
@@ -76,9 +76,9 @@ func New(opts ...option.Options) *MyWaf {
 	}
 
 	// 创建 Waf 实例并初始化其 rejectHandler 和 threatData
-	mywaf := &MyWaf{
+	myWaf := &MyWaf{
 		rejectHandler: http.HandlerFunc(defaultRejectHandler),
-		threatData:    &ThreatData{},
+		threatData:    &model.ThreatData{},
 	}
 
 	// 使用 loc.Caller 获取调用者的包名
@@ -86,7 +86,7 @@ func New(opts ...option.Options) *MyWaf {
 		// 获取调用者的文件路径名
 		_, file, _ := pc.NameFileLine()
 		// 取最后一部分
-		mywaf.caller = path.Base(path.Dir(file))
+		myWaf.caller = path.Base(path.Dir(file))
 	}
 
 	// 创建 zap 的 io.Writer，也就是日志的 writer
@@ -106,7 +106,7 @@ func New(opts ...option.Options) *MyWaf {
 	// 将用户定义的日志文件 LogFile 作为文件句柄添加到 zap 的 writer 中
 	var err error
 	if opt.LogFile != "" {
-		mywaf.logOut, err = os.OpenFile(opt.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		myWaf.logOut, err = os.OpenFile(opt.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			// 这时日志还没初始化完成，因此直接打印到控制台上
 			panic(fmt.Sprintf(errLogFile, opt.LogFile))
@@ -118,29 +118,29 @@ func New(opts ...option.Options) *MyWaf {
 		logLevel = zapcore.DebugLevel
 	}
 	// 创建 zap 实例并完成相关设置
-	mywaf.logger = zap.New(zapcore.NewCore(
+	myWaf.logger = zap.New(zapcore.NewCore(
 		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
 		zapcore.NewMultiWriteSyncer(writeSyncers...),
 		logLevel,
 	))
 	// 记录第一条日志，内容为应用启动时的相关设置
-	mywaf.logger.Info("mywaf application option", zap.Any("option", opt))
+	myWaf.logger.Info("myWaf application option", zap.Any("option", opt))
 	// 推迟执行日志同步函数，将输入流的 buffer 进行刷新
 	defer func() {
-		_ = mywaf.logger.Sync()
+		_ = myWaf.logger.Sync()
 	}()
 	// DSL Env 初始化
-	mywaf.env = dsl.NewEnv()
+	myWaf.env = dsl.NewEnv()
 	// 编译白名单，失败的记录到日志中
 	for _, whitelist := range opt.Whitelists {
-		mywaf.logger.Debug("compiling whitelist", zap.String("whitelist", whitelist))
-		program, err := mywaf.env.Compile(whitelist)
+		myWaf.logger.Debug("compiling whitelist", zap.String("whitelist", whitelist))
+		program, err := myWaf.env.Compile(whitelist)
 		if err != nil {
 			// point 将日志的 error 和 panic 包装成一个函数来调用
-			mywaf.error(zap.PanicLevel, fmt.Sprintf(errCompileDSLExpr, whitelist, err.Error()))
+			myWaf.error(zap.PanicLevel, fmt.Sprintf(errCompileDSLExpr, whitelist, err.Error()))
 			continue
 		}
-		mywaf.wlPrograms = append(mywaf.wlPrograms, program)
+		myWaf.wlPrograms = append(myWaf.wlPrograms, program)
 	}
 	// 解析 opt 中的 custom 部分。分为两部分，一部分是从文件解析，另外一部分是从代码中解析
 	// 首先是从文件中解析，统一转换成从文本解析
@@ -148,19 +148,19 @@ func New(opts ...option.Options) *MyWaf {
 		// point filepath.Glob 根据路径获取所有文件的路径（路径一般有通配符）
 		customRuleFilePaths, err := filepath.Glob(opt.CustomsFromFile)
 		if err != nil {
-			mywaf.error(zap.PanicLevel, fmt.Sprintf(errFindFile, opt.CustomsFromFile, err.Error()))
+			myWaf.error(zap.PanicLevel, fmt.Sprintf(errFindFile, opt.CustomsFromFile, err.Error()))
 		}
 		// 遍历所有的文件
 		for _, customRuleFilePath := range customRuleFilePaths {
-			mywaf.logger.Debug("load CustomsFromFile", zap.String("file", customRuleFilePath), zap.String("filePath", opt.CustomsFromFile))
+			myWaf.logger.Debug("load CustomsFromFile", zap.String("file", customRuleFilePath), zap.String("filePath", opt.CustomsFromFile))
 			customRuleFile, err := os.Open(customRuleFilePath)
 			if err != nil {
-				mywaf.error(zap.PanicLevel, fmt.Sprintf(errOpenFile, customRuleFilePath, err.Error()))
+				myWaf.error(zap.PanicLevel, fmt.Sprintf(errOpenFile, customRuleFilePath, err.Error()))
 			}
 			customRules, errors := yamlToRules(customRuleFile)
 			for _, err := range errors {
 				// 内层错误已经包含了具体是哪一条规则有问题，这里就不再添加 rule 了
-				mywaf.error(zapcore.PanicLevel, fmt.Sprintf(errConvYAML, err))
+				myWaf.error(zapcore.PanicLevel, fmt.Sprintf(errConvYAML, err))
 			}
 			opt.Customs = append(opt.Customs, customRules...)
 		}
@@ -170,25 +170,25 @@ func New(opts ...option.Options) *MyWaf {
 	for _, customRule := range opt.Customs {
 		if customRule.Name == "" {
 			// 虽然名字为空，但是规则依旧可以生效，并提示用户进行检查。
-			mywaf.error(zapcore.PanicLevel, errInvalidRuleName)
+			myWaf.error(zapcore.PanicLevel, errInvalidRuleName)
 		}
 		// 将添加的规则信息写入日志，开发过程中以便查看
-		mywaf.logger.Debug("load custom rule", zap.Any("rule", customRule))
+		myWaf.logger.Debug("load custom rule", zap.Any("rule", customRule))
 		// 处理 condition
 		customRule.Condition = strings.ToLower(customRule.Condition)
 		if customRule.Condition == "" {
 			customRule.Condition = option.DefaultCondition
 		}
 		if customRule.Condition != "or" && customRule.Condition != "and" {
-			mywaf.error(zapcore.PanicLevel, fmt.Sprintf(errInvalidRuleCond, customRule.Name, customRule.Condition))
+			myWaf.error(zapcore.PanicLevel, fmt.Sprintf(errInvalidRuleCond, customRule.Name, customRule.Condition))
 		}
 		// 处理内部的 Detail
 		for i, detail := range customRule.Details {
 			// 先处理 DSL，DSL 权重最高
 			if detail.DSL != "" {
-				program, err := mywaf.env.Compile(detail.DSL)
+				program, err := myWaf.env.Compile(detail.DSL)
 				if err != nil {
-					mywaf.error(zapcore.PanicLevel, fmt.Sprintf(errCompileDSLExpr, detail.DSL, err.Error()))
+					myWaf.error(zapcore.PanicLevel, fmt.Sprintf(errCompileDSLExpr, detail.DSL, err.Error()))
 					continue
 				}
 				customRule.Details[i].DslProgram = program
@@ -197,7 +197,7 @@ func New(opts ...option.Options) *MyWaf {
 			// 检查 DSL 和 regPattern 是否都为空
 			// point 到这里的话，说明 DSL 已经为空了，只需要检查 regPattern 是否为空即可（这里是优化项）
 			if detail.RegPattern == "" {
-				mywaf.error(zapcore.PanicLevel, fmt.Sprintf(errInvalidYAMLRule, customRule.Name, "DSL and pattern cannot be empty"))
+				myWaf.error(zapcore.PanicLevel, fmt.Sprintf(errInvalidYAMLRule, customRule.Name, "DSL and pattern cannot be empty"))
 				continue
 			}
 
@@ -209,19 +209,19 @@ func New(opts ...option.Options) *MyWaf {
 			// 如果 Method 有问题，那就默认全检测，顺便给个提示
 			if detail.Method == request.UNDEFINED {
 				detail.Method = request.ALL
-				mywaf.error(zapcore.PanicLevel, fmt.Sprintf(errInvalidYAMLRule, customRule.Name, "Method may be wrong"))
+				myWaf.error(zapcore.PanicLevel, fmt.Sprintf(errInvalidYAMLRule, customRule.Name, "Method may be wrong"))
 			}
 
 			// 编译 regPattern
 			regex, err := regexp.Compile(detail.RegPattern)
 			if err != nil {
-				mywaf.error(zapcore.PanicLevel, fmt.Sprintf(errRegPattern, detail.RegPattern, err))
+				myWaf.error(zapcore.PanicLevel, fmt.Sprintf(errRegPattern, detail.RegPattern, err))
 			}
 			customRule.Details[i].RegExp = regex
 		}
 	}
 	// 请求 cache 初始化，设置有效时间和
-	mywaf.cache = cache.New(15*time.Minute, 20*time.Minute)
+	myWaf.cache = cache.New(15*time.Minute, 20*time.Minute)
 	// 响应体模板进行设置，先设置响应码
 	if opt.Response.Status != 0 {
 		respStatus = opt.Response.Status
@@ -230,7 +230,7 @@ func New(opts ...option.Options) *MyWaf {
 	if opt.Response.HTMLFile != "" {
 		htmlFile, err := os.ReadFile(opt.Response.HTMLFile)
 		if err != nil {
-			mywaf.error(zapcore.PanicLevel, fmt.Sprintf(errReadFile, htmlFile, err))
+			myWaf.error(zapcore.PanicLevel, fmt.Sprintf(errReadFile, htmlFile, err))
 		}
 		customRespHTMLTemplate = string(htmlFile)
 	}
@@ -238,20 +238,20 @@ func New(opts ...option.Options) *MyWaf {
 	if customRespHTMLTemplate == "" && opt.Response.HTML != "" {
 		customRespHTMLTemplate = opt.Response.HTML
 	}
-	// 别忘了将 opt 赋值给实例 mywaf 中的成员
-	mywaf.opt = opt
+	// 别忘了将 opt 赋值给实例 myWaf 中的成员
+	myWaf.opt = opt
 	// 获取威胁数据库，将 threatData 初始化
-	err = mywaf.getResource()
+	err = myWaf.getResource()
 	if err != nil {
-		mywaf.error(zapcore.PanicLevel, fmt.Sprintf(errResources, err))
+		myWaf.error(zapcore.PanicLevel, fmt.Sprintf(errResources, err))
 	}
 	// 创建额外的协程来执行 Falco 事件
-	go mywaf.handleFalcoEvents()
-	return mywaf
+	go myWaf.handleFalcoEvents()
+	return myWaf
 }
 
 // getResource 表示从远程获取威胁数据库
-func (mywaf *MyWaf) getResource() error {
+func (myWaf *MyWaf) getResource() error {
 	var isUpdated bool
 
 	// 检查数据库是否是最新的
@@ -262,13 +262,13 @@ func (mywaf *MyWaf) getResource() error {
 	}
 	// 如果当前是最新的（同一天），那么就要检查本地文件和远程的 md5 是否匹配
 	if isUpdated {
-		mywaf.logger.Debug("verifying dataset...")
+		myWaf.logger.Debug("verifying dataset...")
 		// todo 验证远程 MD5 和本地威胁库文件 MD5 是否相同
 	}
 
 	// 正常在 Linux 下启动时的情况
-	if !isUpdated && !mywaf.opt.NoUpdateCheck && !mywaf.opt.InMemory {
-		mywaf.logger.Debug("downloading dataset...")
+	if !isUpdated && !myWaf.opt.NoUpdateCheck && !myWaf.opt.InMemory {
+		myWaf.logger.Debug("downloading dataset...")
 		// todo 等 threat.Get 后面远程没有问题了，就要取消注销
 		//err := threat.Get()
 		//if err != nil {
@@ -279,8 +279,8 @@ func (mywaf *MyWaf) getResource() error {
 	// 创建内存变量
 	threatFiles := make(map[string][]byte)
 	// 在虚拟环境下的情况（InMemory 开启），将远程的威胁数据库直接读到内存中。
-	if mywaf.opt.InMemory {
-		mywaf.logger.Debug("downloading datasets in memory...")
+	if myWaf.opt.InMemory {
+		myWaf.logger.Debug("downloading datasets in memory...")
 		// 先请求远程仓库
 		resp, err := http.Get(threat.DbURL)
 		if err != nil {
@@ -319,7 +319,7 @@ func (mywaf *MyWaf) getResource() error {
 	}
 
 	// 初始化威胁数据库结构体
-	mywaf.threatData.data = make(map[threat.Threat]string)
+	myWaf.threatData.Data = make(map[threat.Threat]string)
 
 	// 初始化各种威胁数据库
 	for _, threatType := range threat.List() {
@@ -327,14 +327,14 @@ func (mywaf *MyWaf) getResource() error {
 		var err error
 		var content []byte
 		// 获取文件名（正常 Linux 环境获取完整文件路径）
-		path, err := threatType.Filename(!mywaf.opt.InMemory)
+		path, err := threatType.Filename(!myWaf.opt.InMemory)
 		if err != nil {
 			return err
 		}
 		// 如果设置了从 Memory 中读取，那么就从上面的变量中获取
 		// 如果没有，那就先从文件中读取，文件不存在则从远程源获取到本地文件再读取，如果都不行就直接 return。
 		// 如果不是文件不存在的错误，那说明是意料之外的错误，要直接返回。
-		if mywaf.opt.InMemory {
+		if myWaf.opt.InMemory {
 			content = threatFiles[path]
 		} else {
 			content, err = os.ReadFile(path)
@@ -357,9 +357,9 @@ func (mywaf *MyWaf) getResource() error {
 		}
 		// 内容成功读取后存入变量中
 		// note 有些文本末尾会有换行符，换行分割会导致产生空字符串存入威胁数据库中，因此需要去除掉
-		mywaf.threatData.data[threatType] = strings.TrimRight(string(content), "\n")
+		myWaf.threatData.Data[threatType] = strings.TrimRight(string(content), "\n")
 		// 内容已经存入，接下来要将其解析并存放到结构体变量中
-		err = mywaf.processResource(threatType)
+		err = myWaf.processResource(threatType)
 		if err != nil {
 			return err
 		}
@@ -369,11 +369,11 @@ func (mywaf *MyWaf) getResource() error {
 
 // processResource 将每种威胁的纯文本规则进行处理，主要是对其初始化和反序列化，以将其转换成对应的结构体变量
 // point 对于由软件官方提供的威胁库，不需要做过多的健壮性处理。而对外给用户自定义的（例如 YAML），那么就要使用 validator 进行规范。
-func (mywaf *MyWaf) processResource(threatType threat.Threat) error {
+func (myWaf *MyWaf) processResource(threatType threat.Threat) error {
 	var err error
 
 	// 如果配置选项是详细记录，那么将每次处理的行为进行记录
-	if mywaf.opt.Verbose {
+	if myWaf.opt.Verbose {
 		threatCategory := threatType.ToString()
 		count, err := threatType.Count()
 		if err != nil {
@@ -383,7 +383,7 @@ func (mywaf *MyWaf) processResource(threatType threat.Threat) error {
 		if err != nil {
 			return err
 		}
-		mywaf.logger.Debug("load datasets",
+		myWaf.logger.Debug("load datasets",
 			zap.String("category", threatCategory),
 			zap.Int("count", count),
 			zap.String("filename", filename))
@@ -392,33 +392,33 @@ func (mywaf *MyWaf) processResource(threatType threat.Threat) error {
 	// note 针对不同的攻击类型进行处理
 	switch threatType {
 	case threat.CommonWebAttack:
-		mywaf.threatData.cwa = &model.CWA{}
+		myWaf.threatData.Cwa = &model.CWA{}
 		// 反序列化
-		err = sonic.Unmarshal([]byte(mywaf.threatData.data[threatType]), &mywaf.threatData.cwa)
+		err = sonic.Unmarshal([]byte(myWaf.threatData.Data[threatType]), &myWaf.threatData.Cwa)
 		if err != nil {
 			return err
 		}
 		// 将 CWA 中的 Rule 编译成正则表达式
-		for i, filter := range mywaf.threatData.cwa.Filters {
+		for i, filter := range myWaf.threatData.Cwa.Filters {
 			var err error
-			mywaf.threatData.cwa.Filters[i].Pattern, err = regexp.Compile(filter.Rule)
+			myWaf.threatData.Cwa.Filters[i].Pattern, err = regexp.Compile(filter.Rule)
 			if err != nil {
 				return err
 			}
 		}
 	case threat.CVE:
-		mywaf.threatData.cve = &model.CVE{}
+		myWaf.threatData.Cve = &model.CVE{}
 		// 先通过调用函数解析
-		err = sonic.Unmarshal([]byte(mywaf.threatData.data[threatType]), &mywaf.threatData.cve)
+		err = sonic.Unmarshal([]byte(myWaf.threatData.Data[threatType]), &myWaf.threatData.Cve)
 		if err != nil {
 			return err
 		}
 		// 如果模板没有解析出来，那就要报错
-		if mywaf.threatData.cve.Templates == nil || len(mywaf.threatData.cve.Templates) == 0 {
+		if myWaf.threatData.Cve.Templates == nil || len(myWaf.threatData.Cve.Templates) == 0 {
 			return fmt.Errorf("the CVE templates didn't exist")
 		}
 		// 遍历每一条 CVE
-		for _, template := range mywaf.threatData.cve.Templates {
+		for _, template := range myWaf.threatData.Cve.Templates {
 			// 遍历每一个 CVE 中的具体规则
 			for _, oneReq := range template.Requests {
 				// 将 Raw 和 Path 解析成 url.URL
@@ -455,7 +455,7 @@ func (mywaf *MyWaf) processResource(threatType threat.Threat) error {
 					// 和主应用共用同一个 DSL 环境
 					case "dsl":
 						for _, oneDSL := range matcher.DSL {
-							program, err := mywaf.env.Compile(oneDSL)
+							program, err := myWaf.env.Compile(oneDSL)
 							if err != nil {
 								continue
 							}
@@ -478,22 +478,22 @@ func (mywaf *MyWaf) processResource(threatType threat.Threat) error {
 		}
 	case threat.BadCrawler:
 		// 根据换行符将恶意 IP 文件进行拆分
-		ipRegPatterns := strings.Split(mywaf.threatData.data[threatType], "\n")
-		mywaf.threatData.badCrawler = make([]*regexp.Regexp, len(ipRegPatterns))
+		ipRegPatterns := strings.Split(myWaf.threatData.Data[threatType], "\n")
+		myWaf.threatData.BadCrawler = make([]*regexp.Regexp, len(ipRegPatterns))
 		for i, regPattern := range ipRegPatterns {
 			var err error
-			mywaf.threatData.badCrawler[i], err = regexp.Compile(regPattern)
+			myWaf.threatData.BadCrawler[i], err = regexp.Compile(regPattern)
 			if err != nil {
 				return err
 			}
 		}
 	// 总体逻辑和 threat.BadCrawler 的处理逻辑一样
 	case threat.MaliciousCommand:
-		mcRegPatterns := strings.Split(mywaf.threatData.data[threatType], "\n")
-		mywaf.threatData.maliciousCommand = make([]*regexp.Regexp, len(mcRegPatterns))
+		mcRegPatterns := strings.Split(myWaf.threatData.Data[threatType], "\n")
+		myWaf.threatData.MaliciousCommand = make([]*regexp.Regexp, len(mcRegPatterns))
 		for i, regPattern := range mcRegPatterns {
 			var err error
-			mywaf.threatData.maliciousCommand[i], err = regexp.Compile(regPattern)
+			myWaf.threatData.MaliciousCommand[i], err = regexp.Compile(regPattern)
 			if err != nil {
 				return err
 			}

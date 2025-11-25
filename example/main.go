@@ -1,9 +1,9 @@
-// Package example -----------------------------
+// Package main -----------------------------
 // @author         : EndlessShw
 // @time           : 2025/9/14 14:43
-// @Description    : todo
+// @Description    : 使用案例
 // -------------------------------------------
-package example
+package main
 
 import (
 	"MyWaf"

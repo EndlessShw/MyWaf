@@ -6,7 +6,7 @@
 package MyWaf
 
 import (
-	"MyWaf/model"
+	"MyWaf/internal/model"
 	"github.com/bytedance/sonic"
 	"log"
 	"net/http"

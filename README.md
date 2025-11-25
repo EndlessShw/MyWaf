@@ -1,6 +1,25 @@
 # MyWaf
 从 Golang 开始学安全开发！
 
+# 对外开放的 API
+## 1. 实例化 `MyWaf`，对流入流量过滤
+1. 详细使用方法可见 example
+## 2. 对外暴露分析模块，可以直接调用
+1. 先实例化 `MyWaf`，然后调用其分析模块：
+```go
+func Test_Analyze(t *testing.T) {
+    request, err := http.NewRequest("GET", "http://localhost:8080/analyze?param1=value1&param2=cat%20/etc/passwd", nil)
+    if err != nil {
+    log.Fatalf("fail to create request, err is %v", err)
+    }
+    myWaf := New()
+    err = myWaf.Analyze(nil, request)
+    if err != nil {
+    log.Printf("detect threat! err is %v", err)
+    }
+}
+```
+
 ## 功能需求
 ### 1. 通用主题功能
 1. MyWaf 可以额外写成组件的形式，将 analyze 模块对外提供，这样 IDS 可以直接调用分析模块。

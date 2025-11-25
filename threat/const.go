@@ -9,6 +9,6 @@ package threat
 const (
 	CachePath    = "/MyWaf/"
 	ThreatPath   = CachePath + "threat/"
-	MyWafRes     = "mywaf-resources"
+	MyWafRes     = "myWaf-resources"
 	TmpDirSuffix = "." + MyWafRes + "-%s"
 )

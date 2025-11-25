@@ -33,17 +33,17 @@ func defaultRejectHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // SetHandler 设置拒绝 Handler
-func (mywaf *MyWaf) SetHandler(handler http.Handler) {
-	mywaf.rejectHandler = handler
+func (myWaf *MyWaf) SetHandler(handler http.Handler) {
+	myWaf.rejectHandler = handler
 }
 
 // Handler 继承并返回 http.HandlerFunc，其中添加分析的功能
 // 传入的 normalHandler 为正常业务的 Handler
-func (mywaf *MyWaf) Handler(normalHandler http.Handler) http.Handler {
+func (myWaf *MyWaf) Handler(normalHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		threatType, err := mywaf.analyzeRequest(w, r)
+		threatType, err := myWaf.analyzeRequest(w, r)
 		if err != nil {
-			mywaf.postAnalyze(w, r, err, threatType)
+			myWaf.postAnalyze(w, r, err, threatType)
 			return
 		}
 		// 如果没有拦截的话，就放行

@@ -26,12 +26,12 @@ import (
 	"strings"
 )
 
-func (mywaf *MyWaf) error(level zapcore.Level, msg string) {
+func (myWaf *MyWaf) error(level zapcore.Level, msg string) {
 	// point zap.WithCaller 是为了详细的添加调用者的相关信息，从而帮助定位问题
 	// point zap.AddCallerSkip 是为了跳过当前的调用链，因为此时 logger 的调用者是一个封装的函数，
 	// point 而最终想要获取的业务上的调用者则需要知道封装函数的调用者。因此需要跳过一层。
 	// point WithOptions 是拷贝 logger
-	logger := mywaf.logger.WithOptions(zap.WithCaller(true), zap.AddCallerSkip(1))
+	logger := myWaf.logger.WithOptions(zap.WithCaller(true), zap.AddCallerSkip(1))
 	switch level {
 	case zapcore.ErrorLevel:
 		logger.Error(msg)
@@ -67,7 +67,7 @@ func normalizeRawStringReader(raw string) *strings.Reader {
 }
 
 // setDSLRequestEnv 会根据当前传入的 Request 来设置 DSL 的环境
-func (mywaf *MyWaf) setDSLRequestEnv(req *http.Request) {
+func (myWaf *MyWaf) setDSLRequestEnv(req *http.Request) {
 	// headers 转换成 raw string
 	headers := headersToRawString(req.Header)
 	// uri 要先 urldecode 然后 htmlEscape
@@ -89,7 +89,7 @@ func (mywaf *MyWaf) setDSLRequestEnv(req *http.Request) {
 	}
 
 	// 设置 DSL 环境（看样子是一次请求一个 DSL 环境）
-	mywaf.env.RequestInfo = map[string]interface{}{
+	myWaf.env.RequestInfo = map[string]interface{}{
 		"URI":     uri,
 		"Headers": headers,
 		"Body":    body,
@@ -126,13 +126,13 @@ func stringDeUnescape(str string) string {
 // getCache 返回传入的 key 是否已经缓存
 // @return 第一个参数返回缓存中的 value（也就是具体的错误信息）
 // @return 第二个参数返回缓存是否命中
-func (mywaf *MyWaf) getCache(key string) (error, bool) {
-	if mywaf.opt.NoReqCache {
+func (myWaf *MyWaf) getCache(key string) (error, bool) {
+	if myWaf.opt.NoReqCache {
 		return nil, false
 	}
 
 	// 注意 cache 中存放的是请求的违规错误
-	msg, ok := mywaf.cache.Get(key)
+	msg, ok := myWaf.cache.Get(key)
 	if ok {
 		if msg == nil {
 			return nil, ok
@@ -145,8 +145,8 @@ func (mywaf *MyWaf) getCache(key string) (error, bool) {
 
 // setCache 就是将拦截的错误存入缓存中。如果设置成不使用缓存的话，那么就直接 return
 // @param msg 就是错误信息，如果 msg 为 nil 或者 empty 则存入 nil。
-func (mywaf *MyWaf) setCache(key string, msg string) {
-	if mywaf.opt.NoReqCache {
+func (myWaf *MyWaf) setCache(key string, msg string) {
+	if myWaf.opt.NoReqCache {
 		return
 	}
 
@@ -158,12 +158,12 @@ func (mywaf *MyWaf) setCache(key string, msg string) {
 		err = nil
 	}
 
-	mywaf.cache.Set(key, err, cache.DefaultExpiration)
+	myWaf.cache.Set(key, err, cache.DefaultExpiration)
 }
 
 // isDSLProgramTrue 将传入的 DSL 表达式（这里特指 Boolean 判断表达式）编译并执行，返回表达式的结果
-func (mywaf *MyWaf) isDSLProgramTrue(program *vm.Program) bool {
-	dslEval, err := mywaf.env.Run(program)
+func (myWaf *MyWaf) isDSLProgramTrue(program *vm.Program) bool {
+	dslEval, err := myWaf.env.Run(program)
 	if err != nil {
 		return false
 	}
@@ -186,18 +186,18 @@ func removeSpecialChars(str string) string {
 }
 
 // inThreatRegexpLine 检查传入的字符串是否是某个威胁库中的一行（威胁库的数据是一行一行的）
-func (mywaf *MyWaf) inThreatRegexpLine(threatType threat.Threat, p string) (bool, error) {
+func (myWaf *MyWaf) inThreatRegexpLine(threatType threat.Threat, p string) (bool, error) {
 	var pattern strings.Builder
 	// `(^m)` 表示多行匹配，也就是一行一次匹配
 	pattern.WriteString("(^m)^")
 	pattern.WriteString(regexp.QuoteMeta(p))
 	pattern.WriteString("$")
-	return regexp.MatchString(pattern.String(), mywaf.threatData.data[threatType])
+	return regexp.MatchString(pattern.String(), myWaf.threatData.Data[threatType])
 }
 
 // inThreatIndex 检查传入的字符串是否是威胁库的子字符串
-func (mywaf *MyWaf) inThreatIndex(threatType threat.Threat, substr string) bool {
-	if i := strings.Index(mywaf.threatData.data[threatType], substr); i >= 0 {
+func (myWaf *MyWaf) inThreatIndex(threatType threat.Threat, substr string) bool {
+	if i := strings.Index(myWaf.threatData.Data[threatType], substr); i >= 0 {
 		return true
 	}
 	return false
@@ -226,7 +226,7 @@ func isValidReferrer(referrer string) (bool, string, error) {
 
 // 该方法不用，需要获取 body 时通过 MyWaf.env.GetRequestValue("Body")
 // getBodyStr 用于获取经过 UrlDecode 和 HTML 实体解码的请求体
-//func (mywaf *MyWaf) getBodyStr(req *http.Request) string {
+//func (myWaf *MyWaf) getBodyStr(req *http.Request) string {
 //	body := ""
 //	if req.Body != nil {
 //		// 暂存请求体内容的缓冲区
@@ -254,15 +254,15 @@ func getUID() string {
 }
 
 // getListenAddr 获取 HTTP Server 部署的地址。同时用 Cache 存储地址以便获取
-func (mywaf *MyWaf) getListenAddr(req *http.Request) string {
+func (myWaf *MyWaf) getListenAddr(req *http.Request) string {
 	cacheKey := "listen_addr"
-	if listenAddrCache, ok := mywaf.cache.Get(cacheKey); ok {
+	if listenAddrCache, ok := myWaf.cache.Get(cacheKey); ok {
 		return listenAddrCache.(string)
 	}
 	// note 无侵入式获取当前 HTTP 部署的地址：https://stackoverflow.com/questions/52060812/get-the-port-of-the-local-http-server-without-hijacking-the-connection/52061671#52061671
 	if serverAddr, ok := (req.Context().Value(http.LocalAddrContextKey)).(net.Addr); ok {
 		listenAddr := serverAddr.String()
-		mywaf.cache.Set(cacheKey, listenAddr, cache.DefaultExpiration)
+		myWaf.cache.Set(cacheKey, listenAddr, cache.DefaultExpiration)
 		return listenAddr
 	}
 	return ""

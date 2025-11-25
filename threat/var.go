@@ -7,7 +7,7 @@ package threat
 
 var (
 	// todo 以后待更新
-	DbFilename = "mywaf.tar.zst"
+	DbFilename = "myWaf.tar.zst"
 	DbURL      = "" + "/todo/" + DbFilename
 )
 
