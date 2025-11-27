@@ -6,9 +6,9 @@
 package MyWaf
 
 import (
-	"MyWaf/option"
-	"MyWaf/request"
 	"fmt"
+	"github.com/EndlessShw/MyWaf/option"
+	"github.com/EndlessShw/MyWaf/request"
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -30,7 +30,7 @@ type yamlRule struct {
 
 // yamlToRules 将一个 Yaml 文件转成 Rules（Slice）
 // Point 源项目中不懂为什么只输出一个 Rule，总不可能一个文件只对应一个 Rule 吧。
-// Point 源项目中也没有给 YAML 的规则文件格式，example 给的 yaml 解析有问题。例如 Element 的指定。
+// Point 源项目中也没有给 YAML 的规则文件格式，examples 给的 yaml 解析有问题。例如 Element 的指定。
 func yamlToRules(file *os.File) ([]option.Rule, []error) {
 	defer file.Close()
 	// 先创建 validator 实例

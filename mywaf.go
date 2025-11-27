@@ -6,14 +6,14 @@
 package MyWaf
 
 import (
-	"MyWaf/internal/dsl"
-	"MyWaf/internal/model"
-	"MyWaf/option"
-	"MyWaf/request"
-	"MyWaf/threat"
 	"archive/tar"
 	"bufio"
 	"fmt"
+	"github.com/EndlessShw/MyWaf/internal/dsl"
+	"github.com/EndlessShw/MyWaf/internal/model"
+	"github.com/EndlessShw/MyWaf/option"
+	"github.com/EndlessShw/MyWaf/request"
+	"github.com/EndlessShw/MyWaf/threat"
 	"github.com/bytedance/sonic"
 	"github.com/dwisiswant0/pcregexp/pkg/regexp"
 	"github.com/expr-lang/expr/vm"

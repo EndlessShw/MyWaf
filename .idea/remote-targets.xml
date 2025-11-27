@@ -5,7 +5,7 @@
     <targets>
       <target name="endlessshw@10.21.253.66:22" type="ssh/sftp" uuid="af1ca8fd-2c44-4186-a4bd-8033b6591465">
         <config>
-          <option name="projectRootOnTarget" value="/home/endlessshw/MyWaf" />
+          <option name="projectRootOnTarget" value="/home/endlessshw/GoProjects/MyWaf" />
           <option name="serverName" value="endlessshw@10.21.253.66:22 password" />
         </config>
         <ContributedStateBase type="GoLanguageRuntime">

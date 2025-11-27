@@ -6,10 +6,10 @@
 package main
 
 import (
-	"MyWaf"
-	"MyWaf/option"
-	"MyWaf/request"
-	"MyWaf/threat"
+	"github.com/EndlessShw/MyWaf"
+	"github.com/EndlessShw/MyWaf/option"
+	"github.com/EndlessShw/MyWaf/request"
+	"github.com/EndlessShw/MyWaf/threat"
 	"net/http"
 )
 

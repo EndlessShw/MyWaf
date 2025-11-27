@@ -6,7 +6,7 @@
 package option
 
 import (
-	"MyWaf/request"
+	"github.com/EndlessShw/MyWaf/request"
 	"github.com/dwisiswant0/pcregexp/pkg/regexp"
 	"github.com/expr-lang/expr/vm"
 )

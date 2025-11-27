@@ -6,7 +6,7 @@
 package dsl
 
 import (
-	"MyWaf/threat"
+	"github.com/EndlessShw/MyWaf/threat"
 	"github.com/daniel-hutao/spinlock"
 	"github.com/expr-lang/expr"
 	"github.com/projectdiscovery/mapcidr"

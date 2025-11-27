@@ -6,10 +6,10 @@
 package MyWaf
 
 import (
-	"MyWaf/request"
-	"MyWaf/threat"
 	"errors"
 	"fmt"
+	"github.com/EndlessShw/MyWaf/request"
+	"github.com/EndlessShw/MyWaf/threat"
 	"github.com/bytedance/sonic"
 	"github.com/dwisiswant0/pcregexp/pkg/regexp"
 	"go.uber.org/zap"

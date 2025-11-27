@@ -6,10 +6,10 @@
 package MyWaf
 
 import (
-	"MyWaf/request"
-	"MyWaf/threat"
 	"bytes"
 	"errors"
+	"github.com/EndlessShw/MyWaf/request"
+	"github.com/EndlessShw/MyWaf/threat"
 	"github.com/dwisiswant0/clientip"
 	"github.com/expr-lang/expr/vm"
 	"github.com/patrickmn/go-cache"

@@ -6,7 +6,7 @@
 package model
 
 import (
-	"MyWaf/threat"
+	"github.com/EndlessShw/MyWaf/threat"
 	"github.com/dwisiswant0/pcregexp/pkg/regexp"
 )
 
