@@ -7,17 +7,27 @@
 ## 2. 对外暴露分析模块，可以直接调用
 1. 先实例化 `MyWaf`，然后调用其分析模块：
 ```go
+package test
+
+import (
+	"github.com/EndlessShw/MyWaf"
+	"log"
+	"net/http"
+	"testing"
+)
+
 func Test_Analyze(t *testing.T) {
-    request, err := http.NewRequest("GET", "http://localhost:8080/analyze?param1=value1&param2=cat%20/etc/passwd", nil)
-    if err != nil {
-    log.Fatalf("fail to create request, err is %v", err)
-    }
-    myWaf := New()
-    err = myWaf.Analyze(nil, request)
-    if err != nil {
-    log.Printf("detect threat! err is %v", err)
-    }
+	request, err := http.NewRequest("GET", "http://localhost:8080/analyze?param1=value1&param2=cat%20/etc/passwd", nil)
+	if err != nil {
+		log.Fatalf("fail to create request, err is %v", err)
+	}
+	myWaf := MyWaf.New()
+	err = myWaf.Analyze(nil, request)
+	if err != nil {
+		log.Printf("detect threat! err is %v", err)
+	}
 }
+
 ```
 
 ## 功能需求
