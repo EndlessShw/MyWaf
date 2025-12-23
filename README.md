@@ -41,3 +41,8 @@ func Test_Analyze(t *testing.T) {
 2. CVE 模块中对 Path 的处理不够，得考虑路径穿越和大小写绕过等问题
 3. 原先 CVE 模块中判断是否命中是检查所有的请求参数是否完全对应。如果依旧使用全匹配，那么在写规则模板时就要考虑最小原则。
 4. 添加恶意命令检测，包括但不限于反弹 Shell，查看系统敏感文件，通用命令等。
+
+## TODO List
+- [ ] Threat 数据库同步功能
+- [ ] Analyze 模块需要返回 data map，用来对接 Prometheus 等。
+- [ ] Analyze 模块下，CVE 和 Custom Rule 需要返回某些特定内容。
