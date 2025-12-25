@@ -6,5 +6,7 @@
 package threat
 
 const (
-	errFilepath = "unable to get file path location of given %s threat type"
+	errFilepath         = "unable to get file path location of given %s threat type"
+	errFetchMD5         = "unable to fetch MD5SUMS from remote repository: %v"
+	errChecksumMismatch = "checksum mismatch for file %s"
 )

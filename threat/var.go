@@ -6,9 +6,10 @@
 package threat
 
 var (
-	// todo 以后待更新
-	DbFilename = "myWaf.tar.zst"
-	DbURL      = "" + "/todo/" + DbFilename
+	DbFilename     = "myWaf.tar.zst"
+	MD5SumFilename = "MD5SUMS"
+	DbURL          = RepoURL + "/raw/master/db/" + DbFilename
+	MD5SumURL      = RepoURL + "/raw/master/db/" + MD5SumFilename
 )
 
 // str 将 Threat 转换成 string

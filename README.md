@@ -43,6 +43,7 @@ func Test_Analyze(t *testing.T) {
 4. 添加恶意命令检测，包括但不限于反弹 Shell，查看系统敏感文件，通用命令等。
 
 ## TODO List
-- [ ] Threat 数据库同步功能
+- [x] Threat 数据库同步功能
+- [ ] 测试同步功能
 - [ ] Analyze 模块需要返回 data map，用来对接 Prometheus 等。
 - [ ] Analyze 模块下，CVE 和 Custom Rule 需要返回某些特定内容。

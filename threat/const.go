@@ -11,4 +11,5 @@ const (
 	ThreatPath   = CachePath + "threat/"
 	MyWafRes     = "myWaf-resources"
 	TmpDirSuffix = "." + MyWafRes + "-%s"
+	RepoURL      = "https://github.com/EndlessShw/waf-resource"
 )

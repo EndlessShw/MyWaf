@@ -7,6 +7,8 @@ package threat
 
 import (
 	"fmt"
+	// 专门通过 URL 获取文件的库
+	"github.com/hashicorp/go-getter"
 	"os"
 	"path/filepath"
 	"time"
@@ -36,12 +38,21 @@ func Get() error {
 	// 然后将 /tmp 下的文件转移到 .cache 下
 	err = getFromLocal()
 	if err != nil {
-		// todo 如果本地获取不到，那就要调用远程来获取
-		// todo 获取完后 tmp 目录下也拷贝一份
-		//tmpDst, err := tmpLocation()
-		//if err != nil {
-		//	return err
-		//}
+		// 如果本地获取不到，那就要调用远程来获取
+		err = getter.Get(threatLocation, DbURL)
+		if err != nil {
+			return err
+		}
+
+		// 获取完后 tmp 目录下也拷贝一份
+		tmpDst, err := tmpLocation()
+		if err != nil {
+			return err
+		}
+		err = copy.Copy(threatLocation, tmpDst)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -254,31 +254,11 @@ func New(opts ...option.Options) *MyWaf {
 func (myWaf *MyWaf) getResource() error {
 	var isUpdated bool
 
-	// 检查数据库是否是最新的
-	isUpdated, err := threat.IsUpdated()
-	// 报错为文件的读取问题
-	if err != nil {
-		isUpdated = false
-	}
-	// 如果当前是最新的（同一天），那么就要检查本地文件和远程的 md5 是否匹配
-	if isUpdated {
-		myWaf.logger.Debug("verifying dataset...")
-		// todo 验证远程 MD5 和本地威胁库文件 MD5 是否相同
-	}
-
-	// 正常在 Linux 下启动时的情况
-	if !isUpdated && !myWaf.opt.NoUpdateCheck && !myWaf.opt.InMemory {
-		myWaf.logger.Debug("downloading dataset...")
-		// todo 等 threat.Get 后面远程没有问题了，就要取消注销
-		//err := threat.Get()
-		//if err != nil {
-		//	return err
-		//}
-	}
-
-	// 创建内存变量
+	// 1. 根据是否是虚拟环境，决定威胁库是下载到本地还是直接加载到内存中。其中本地是需要判断是否是最新的，如果是内存，那每次启动都要下载，不用判断。
+	// 先是内存情况下
+	// 创建临时内存变量以存放原始威胁数据库内容
 	threatFiles := make(map[string][]byte)
-	// 在虚拟环境下的情况（InMemory 开启），将远程的威胁数据库直接读到内存中。
+	// 如果是在虚拟环境下的情况（InMemory 开启），将远程的威胁数据库直接读到内存中。
 	if myWaf.opt.InMemory {
 		myWaf.logger.Debug("downloading datasets in memory...")
 		// 先请求远程仓库
@@ -318,9 +298,34 @@ func (myWaf *MyWaf) getResource() error {
 		}
 	}
 
-	// 初始化威胁数据库结构体
-	myWaf.threatData.Data = make(map[threat.Threat]string)
+	// 如果不是内存的情况，那就要检查本地文件是否是最新的，不是最新的就下载最新的
+	isUpdated, err := threat.IsUpdated()
+	// 报错为文件的读取问题
+	if err != nil {
+		isUpdated = false
+	}
+	// 如果当前是最新的（同一天），那么就要检查本地文件和远程的 md5 是否匹配
+	if isUpdated {
+		myWaf.logger.Debug("verifying dataset...")
+		err := threat.Verify()
+		// NOTE 原来它这里 false 和 err 是一致的，所有不存在所谓的 false 且 err == nil 的情况
+		// NOTE 因此这里对其进行简化，一个 Err 足够
+		if err != nil {
+			myWaf.logger.Debug(err.Error())
+			isUpdated = false
+		}
+	}
+	// 将威胁库压缩包下载/移动到缓存目录下。
+	if !isUpdated && !myWaf.opt.NoUpdateCheck && !myWaf.opt.InMemory {
+		myWaf.logger.Debug("downloading dataset...")
+		err := threat.Get()
+		if err != nil {
+			return err
+		}
+	}
 
+	// 2. 初始化威胁数据库结构体，也就是从内存中或者本地文件中读取威胁数据库内容并进行解析
+	myWaf.threatData.Data = make(map[threat.Threat]string)
 	// 初始化各种威胁数据库
 	for _, threatType := range threat.List() {
 		// 创建局部变量
@@ -340,10 +345,10 @@ func (myWaf *MyWaf) getResource() error {
 			content, err = os.ReadFile(path)
 			if err != nil {
 				if os.IsNotExist(err) {
-					//err := threat.Get()
-					//if err != nil {
-					//	return err
-					//}
+					err := threat.Get()
+					if err != nil {
+						return err
+					}
 					// 再次尝试从文件中读取，还不行的话就抛出吧
 					content, err = os.ReadFile(path)
 					if err != nil {
@@ -498,6 +503,8 @@ func (myWaf *MyWaf) processResource(threatType threat.Threat) error {
 				return err
 			}
 		}
+	default:
+		panic("unknown threat type!")
 	}
 	return nil
 }
